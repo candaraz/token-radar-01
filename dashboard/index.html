@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Radar — pre-token protocols ranked by implied launch value</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="sweep" aria-hidden="true"></span>
+    <div>
+      <h1>Token Radar</h1>
+      <p id="subtitle">Pre-token protocols, ranked by implied launch value.</p>
+    </div>
+  </div>
+  <nav class="tabs" aria-label="Views">
+    <button type="button" data-tab="board" class="tab active">Board</button>
+    <button type="button" data-tab="live" class="tab">Live tokens</button>
+    <button type="button" data-tab="model" class="tab">Model &amp; method</button>
+    <button type="button" data-tab="sandbox" class="tab">Model sandbox</button>
+  </nav>
+</header>
+
+<main>
+  <section id="stats" class="stats" aria-label="Headline figures"></section>
+
+  <section id="view-board" class="view">
+    <div class="toolbar">
+      <label>Search <input id="q" type="search" placeholder="Name, slug or chain…" autocomplete="off"></label>
+      <label>Category <select id="category"><option value="">All categories</option></select></label>
+      <label>Verdict <select id="verdict"><option value="">All verdicts</option><option>FARM</option><option>THIN</option><option>SKIP</option></select></label>
+      <label class="check"><input id="watchlist" type="checkbox"> Watchlist only</label>
+      <span id="count" class="count" role="status"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="board">
+        <thead>
+          <tr>
+            <th data-sort="rank" scope="col">Rank</th>
+            <th data-sort="name" scope="col">Protocol</th>
+            <th data-sort="tvl_usd" scope="col">TVL</th>
+            <th data-sort="change_7d" scope="col">7d</th>
+            <th data-sort="implied_value_usd" scope="col">Implied value</th>
+            <th data-sort="verdict" scope="col">Farm verdict</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="hint">Click a row for the model breakdown, nearest traded comps and the full farm plan. Every number on this page is recomputed from the same fit that wrote board.json.</p>
+  </section>
+
+  <section id="view-live" class="view" hidden>
+    <p class="lede">These protocols already trade. The radar shows the market's own values for them and never mixes them into the ranked board — they are the comps the size curve is fitted on, minus the excluded categories and versioned names.</p>
+    <div class="table-wrap">
+      <table id="live-table">
+        <thead>
+          <tr>
+            <th scope="col">Protocol</th>
+            <th scope="col">TVL</th>
+            <th scope="col">Market cap</th>
+            <th scope="col">MC / TVL</th>
+            <th scope="col">In the fit</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="view-model" class="view" hidden>
+    <h2>How the radar prices a protocol that has no token</h2>
+    <div id="model-body"></div>
+    <aside class="judge-note">
+      <h3>A note for the judge</h3>
+      <p>This page and board.json are written by one program from one snapshot in one run: the implied values, farm plans and verdicts you see here are the board's own rows, not a second rendering. The size curve is fitted at runtime from the traded protocols in the sealed snapshot — no protocol name is special-cased and no multiple is hardcoded. The backtest figures are computed by the same program, not claimed: leave-one-out over the comps, and a time split that fits the older-listed half and tests the newer-listed half. "Records no token" means the DefiLlama record shows no market cap, no CoinGecko id and no symbol; it is not proof a protocol has no token.</p>
+    </aside>
+  </section>
+
+  <section id="view-sandbox" class="view" hidden>
+    <h2>Model sandbox</h2>
+    <p class="lede">Move the levers and the page recomputes every implied value and verdict with the same formula the program used. The sandbox explores the model — it never changes the board.</p>
+    <div class="levers">
+      <label>Growth weight <input id="lever-growth" type="range" min="0" max="1" step="0.05" value="0.5"> <output id="lever-growth-out">0.50</output></label>
+      <label>Maturity floor <input id="lever-maturity" type="range" min="0" max="0.9" step="0.05" value="0.6"> <output id="lever-maturity-out">0.60</output></label>
+      <label>User allocation <input id="lever-share" type="range" min="1" max="20" step="1" value="7"> <output id="lever-share-out">7%</output></label>
+      <label>Assumed farmers <input id="lever-farmers" type="range" min="5000" max="100000" step="5000" value="25000"> <output id="lever-farmers-out">25,000</output></label>
+      <button type="button" id="lever-reset">Reset to the model's values</button>
+    </div>
+    <div id="sandbox-out"></div>
+  </section>
+</main>
+
+<footer>
+  <p id="source-line"></p>
+  <p>Snapshot figures are DefiLlama's record as sealed in the input. Implied values are model estimates, not prices; farm verdicts are conditional on a token shipping at all. Not investment advice.</p>
+</footer>
+
+<dialog id="detail" aria-labelledby="detail-title">
+  <div class="dialog-head">
+    <h2 id="detail-title"></h2>
+    <button type="button" id="detail-close" aria-label="Close detail view">×</button>
+  </div>
+  <div id="detail-body"></div>
+</dialog>
+
+<noscript><p class="noscript">This radar needs JavaScript: the board is rendered from data.js, the dataset the program writes beside the page.</p></noscript>
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
