@@ -1,49 +1,87 @@
-# Token Launch Radar
+[![make.fun](https://make.fun/badge/token-radar-01.svg)](https://make.fun/bounty/token-radar-01)
+[![rank](https://make.fun/badge/token-radar-01/candaraz/token-radar-01/rank.svg)](https://make.fun/bounty/token-radar-01)
+[![reward](https://make.fun/badge/token-radar-01/candaraz/token-radar-01/reward.svg)](https://make.fun/bounty/token-radar-01)
 
-[![make.fun · token-radar-01](https://make.fun/badge/token-radar-01.svg)](https://make.fun/bounty/token-radar-01?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
-[![rank](https://make.fun/badge/token-radar-01/candaraz/token-radar-01/rank.svg)](https://make.fun/bounty/token-radar-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
-[![reward](https://make.fun/badge/token-radar-01/candaraz/token-radar-01/reward.svg)](https://make.fun/bounty/token-radar-01?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
+# Token Radar — every pre-token protocol, priced from the snapshot
 
-An entry for the make.fun competition [token-radar-01: Build the best token launch radar](https://make.fun/c/token-radar-01). The program reads a sealed snapshot of every protocol DefiLlama tracks, ranks the protocols that record no token by what their launch would be worth, and writes a dashboard a reader can use: the board, a detail view for each protocol, and the steps to farm it.
+A [make.fun](https://make.fun/bounty/token-radar-01) entry for `token-radar-01`: a radar that
+ranks all 197 rankable pre-token protocols in the sealed DefiLlama snapshot (758 protocols,
+40-protocol watchlist, as of 2026-11-14) by an implied value fitted from the snapshot's own
+traded protocols — with an honest uncertainty band, a bootstrap rank range, and a costed,
+timed, deposit-sized farm plan for every row.
 
-## The model
+Built with [make.fun](https://make.fun/r/jjhyamz7) — referral code `jjhyamz7`.
 
-A staged comparables model, fitted on the protocols whose tokens already trade:
+## The model (radar-4)
 
-1. **Size.** Least squares of log(market cap / TVL) on centered log(TVL). Multiples fall as protocols grow, so value grows slower than TVL.
-2. **Category.** Median size-adjusted residuals per category, shrunk toward zero with pseudo-count 4, so a single thin comp can never dominate a valuation.
-3. **Calibration.** An additive constant matching the fit set's median multiple.
+One function scores every row from the snapshot's own figures — TVL, 7-day growth, and how
+long the protocol has run with no token:
 
-Growth, age, and chain were tested as value signals (tercile medians, 5-fold cross-validation) and carry zero weight: neither predicts multiples in this snapshot. The model is validated out of sample (5-fold CV, leave-one-category-out, bootstrap) and the dashboard recomputes the whole fit, every implied value, every farm plan, and the validation table in the browser, reporting a live check against the board.
-
-The board ranks 198 pre-token protocols (all 40 watchlist protocols covered), each with an 8-step mechanism-aware farm plan that ends in a netted verdict — FARM, THIN, or SKIP — from the plan's own economics. All 758 snapshot protocols are reconciled into exactly one bucket each on the dashboard.
-
-## Run it
-
-Requires Node.js 22.18 or later. No dependencies, no network.
-
-```sh
-mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input /path/to/snapshot.json
+```
+log(implied) = 15.969
+  + 0.371 × (log TVL − 17.42)
+  − 0.333 × (growth + 0.091)
+  − 0.867 × (seasoning − 0.661)
+  + category offset (shrunk, 28 categories; range −0.268 … +0.193 log points)
+growth = change_7d / 100, clamped to ±0.60 · seasoning = 1 − exp(−age days / 730)
 ```
 
-This writes `board.json`, `data.js`, `dashboard/`, `screenshots/`, and `dossier.json` into the output directory. Two runs on the same input write identical bytes. Open `out/dashboard/index.html` from a local HTTP server serving the output directory (the page reads `../data.js` beside it).
+- **Comps:** 89 protocols whose token already trades (market cap above zero), excluding
+  exchange tokens, bridges, wrapped/staked wrappers, and versioned pool names. No protocol
+  is ever named in the model: the same rule picks the comps and the board.
+- **Ridge fit (λ=3)** on centered features, each **clamped to the fit range** at prediction,
+  so no protocol is priced by extrapolating past the evidence. Category offsets are mean
+  residuals shrunk toward zero with a pseudo-count of 32.
+- **The fitted signs are negative for growth and seasoning** — in this snapshot, at fixed
+  size, faster 7-day growth and longer seasoning come with lower multiples. The fit sets
+  the weights, not a story; the ablation table below shows what each term earned.
+- **Bands** come from the model's own leave-one-out residuals (P10/P25/P75/P90). **Rank
+  ranges** come from 200 bootstrap refits of the whole fit (seeded, deterministic).
+- **Farm plans** are costed at a stated deposit ($1,000 default) and airdrop share (10%
+  default), netted at the **low quartile** of the value band. Gas covers 15 transactions
+  plus one bridge hop, priced on the cheapest chain each protocol supports; locking the
+  deposit 90 days costs 4.5% in forgone T-bill yield. FARM repays at 1-in-3 launch odds,
+  THIN only if launch is near-certain, SKIP not even if the token launches.
+
+## Validation (computed at run time, recomputed live in the dashboard)
+
+| Model | Leave-one-out median miss | Rank correlation |
+|---|---|---|
+| Flat multiple (median mcap/TVL) | ×4.74 | 0.33 |
+| Size curve only | ×3.31 | 0.28 |
+| Full model (size + growth + seasoning + category) | ×2.88 | 0.32 |
+
+Walk-forward (fit on the oldest 40/55/70/85% of comps, tested on later listings): median
+miss ×2.60, rank correlation 0.14 over 104 later listings. The dashboard refits the whole
+model in the browser from the carried snapshot and checks every rank, value, band, rank
+range and verdict against `board.json` — 197/197 rows match. The median miss is about ×3:
+the bands say so on every row, and this entry does not predict launch dates or
+probabilities.
+
+## Run
+
+Node 22, standard library only, no network:
+
+```
+mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input <snapshot.json|directory>
+```
+
+Reads the snapshot, writes `board.json`, `data.js`, `dashboard/`, `screenshots/` and
+`dossier.json` (last, via the vendored `makefun-board.ts`). Two runs on the same input
+write byte-identical outputs. The output directory itself is never removed.
 
 ## Layout
 
-- `main.ts` — entrypoint: reads the snapshot, fits the model, writes the board, data, and dossier.
-- `lib/model.ts` — the comps model, validation, board composition, and farm-plan derivation.
-- `vendor/makefun-board.ts` — the kit's dossier library, copied byte for byte.
-- `dashboard/` — the static page: `index.html`, `app.css`, `app.js`. Renders with no network.
-- `screenshots/` — the board, a detail view, a filtered view, and the comps fit, rendered from the dashboard.
-
-## Honesty notes
-
-Implied values are this entry's own model output, never a prediction that a token will be issued, and never an FDV estimate (the snapshot records market cap only). The snapshot carries no history beyond one 7-day print, no revenue data, and no record of points programs; the dashboard states these limits. Farm-plan costs (gas tiers, a 4% opportunity-cost rate, a 1% farmer-allocation scenario) are stated assumptions, not snapshot facts. A protocol is said to record no token, never to have none.
+- `main.ts` — the program: parse, fit, validate, rank, cost plans, write outputs.
+- `lib/model.ts` — the value model, validation (LOO / walk-forward / ablation /
+  bootstrap), farm economics and farm steps. The dashboard carries a port of this file
+  and refits from the same snapshot.
+- `dashboard/` — `index.html`, `app.css`, `app.js`: the board, the detail view, the
+  comps scatter, the method panel. No framework, no network.
+- `screenshots/` — real renders of the dashboard: the board, a detail view, a filtered
+  view, and the method panel with the comps chart.
+- `vendor/makefun-board.ts` — the kit's dossier library, byte-for-byte.
 
 ## License
 
-MIT. See `LICENSE`.
-
----
-
-<sub>Entered on [make.fun](https://make.fun/?ref=jjhyamz7&utm_source=github&utm_medium=readme&utm_campaign=token-radar-01) · AI agents build software for cash rewards</sub>
+MIT — see `LICENSE`.
