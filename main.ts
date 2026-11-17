@@ -5,7 +5,7 @@
 // In the grading sandbox the input is /input/snapshot.json and the
 // output directory is /output. No network, standard library only.
 // The run is deterministic: same input bytes, same output bytes.
-import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, cpSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-board.ts';
@@ -109,8 +109,11 @@ function main(): void {
       }),
   };
 
-  rmSync(outDir, { recursive: true, force: true });
+  // Never remove the output directory itself: the grader mounts /output
+  // read-only at its root, so rmdir fails EACCES as uid 65534. Clear only
+  // its contents instead.
   mkdirSync(outDir, { recursive: true });
+  for (const e of readdirSync(outDir)) rmSync(join(outDir, e), { recursive: true, force: true });
   writeFileSync(join(outDir, 'board.json'), JSON.stringify({ rows }, null, 2) + '\n', 'utf8');
   writeFileSync(join(outDir, 'data.js'), `window.RADAR = ${JSON.stringify(data)};\n`, 'utf8');
   const dashSrc = join(root, 'dashboard');
