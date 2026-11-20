@@ -3,150 +3,70 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Token Radar — pre-token protocols, priced from the snapshot</title>
+<title>Token Radar 5 — pre-token protocols ranked by expected value</title>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<header class="top">
-  <div class="wrap top-in">
-    <div>
-      <div class="brand">TOKEN RADAR</div>
-      <div class="tagline">Pre-token protocols priced from the snapshot's traded comps — uncertainty shown, farm plan costed.</div>
-    </div>
-    <div class="top-meta">
-      <div id="snapLine">Snapshot —</div>
-      <div class="badge-model">model radar-4 · refit in this page</div>
-      <div id="checkBadge" class="badge-check">Refitting…</div>
-    </div>
+<a class="skip" href="#board">Skip to the board</a>
+<header class="masthead">
+  <div class="masthead-inner">
+    <p class="kicker">TOKEN RADAR · RADAR-5 · EXPECTED VALUE = LAUNCH VALUE × TOKEN ODDS</p>
+    <h1>Which pre-token protocol is worth farming?</h1>
+    <p class="lede">Every protocol the snapshot carries, ranked by what its token would be worth
+      <em>if</em> it launches, times how likely it ever is to record one. The launch value is a
+      comps curve fitted on the traded tokens; the odds are a logistic fit on the peers'
+      record. Both fits — and the held-out tests that kept or dropped each term — are on
+      this page, with the numbers the model actually got.</p>
+    <p class="asof" id="asof"></p>
   </div>
 </header>
-<main class="wrap">
-  <section id="stats" class="stats"></section>
-
-  <section class="card controls" id="controls">
-    <div class="tabs">
-      <button id="tabBoard" class="tab on" type="button">Pre-token board</button>
-      <button id="tabLive" class="tab" type="button">Live tokens</button>
+<main id="board" tabindex="-1" aria-busy="true">
+  <section class="strip" id="kpi" aria-label="Coverage and verdicts"></section>
+  <section class="panel controls" aria-label="Board controls">
+    <div class="tabs" role="tablist" aria-label="Views">
+      <button type="button" role="tab" data-view="board" aria-selected="true">Ranked board</button>
+      <button type="button" role="tab" data-view="live" aria-selected="false">Live tokens</button>
+      <button type="button" role="tab" data-view="excluded" aria-selected="false">Excluded pre-token</button>
+      <button type="button" role="tab" data-view="nomcap" aria-selected="false">Token, no market cap</button>
     </div>
-    <div class="ctl-row">
-      <label>Search <input id="q" type="search" placeholder="name, slug or category" autocomplete="off"></label>
-      <label>Category <select id="cat"><option value="">All categories</option></select></label>
-      <label>Verdict <select id="verdict"><option value="">All verdicts</option><option>FARM</option><option>THIN</option><option>SKIP</option></select></label>
-      <label>Deposit <select id="deposit"><option value="500">$500</option><option value="1000" selected>$1,000</option><option value="5000">$5,000</option><option value="10000">$10,000</option></select></label>
-      <label>Airdrop share <select id="share"><option value="0.05">5%</option><option value="0.10" selected>10%</option><option value="0.20">20%</option></select></label>
+    <div class="filters">
+      <label>Search <input id="q" type="search" placeholder="name or slug" autocomplete="off"></label>
+      <label>Verdict
+        <select id="verdict">
+          <option value="all">All verdicts</option>
+          <option value="FARM">FARM</option>
+          <option value="THIN">THIN</option>
+          <option value="SKIP">SKIP</option>
+        </select>
+      </label>
+      <label>Category
+        <select id="category"><option value="all">All categories</option></select>
+      </label>
+      <label>Sort
+        <select id="sort">
+          <option value="ev">Expected value</option>
+          <option value="launch">Launch value</option>
+          <option value="odds">Token odds</option>
+          <option value="tvl">TVL</option>
+          <option value="growth">7-day growth</option>
+          <option value="net">Farm net</option>
+        </select>
+      </label>
     </div>
-    <p class="note">Deposit and share re-derive every slice, net, verdict and farm step. Click a column to sort.</p>
+    <p class="count" id="count"></p>
   </section>
-
-  <section id="bestfarms"></section>
-  <section class="card" id="detail" hidden></section>
-
-  <section class="card" id="boardCard">
-    <h2>Pre-token board <span class="count" id="boardCount"></span></h2>
-    <div class="tbl-wrap"><table id="board">
-      <thead><tr>
-        <th data-k="rank" class="sortable">Rank</th>
-        <th data-k="name" class="sortable">Protocol</th>
-        <th data-k="value" class="sortable">Implied value</th>
-        <th data-k="tvl" class="sortable">TVL</th>
-        <th data-k="growth" class="sortable">7d</th>
-        <th data-k="age" class="sortable">Age</th>
-        <th data-k="slice" class="sortable">Slice</th>
-        <th data-k="net" class="sortable">Net if launch</th>
-        <th data-k="be" class="sortable">Break-even</th>
-        <th data-k="verdict" class="sortable">Verdict</th>
-      </tr></thead>
-      <tbody id="boardBody"></tbody>
-    </table></div>
-  </section>
-
-  <section class="card" id="liveCard" hidden>
-    <h2>Live tokens <span class="count" id="liveCount"></span></h2>
-    <p class="lede">Protocols whose token already trades, at the market's own values — never mixed into
-    the ranked board. The comps that fit the model are marked ◆.</p>
-    <div class="tbl-wrap"><table id="live">
-      <thead><tr>
-        <th data-k="name" class="sortable">Protocol</th>
-        <th data-k="mcap" class="sortable">Market cap</th>
-        <th data-k="tvl" class="sortable">TVL</th>
-        <th data-k="mult" class="sortable">Mcap / TVL</th>
-        <th data-k="growth" class="sortable">7d</th>
-        <th data-k="comp" class="sortable">Comp?</th>
-      </tr></thead>
-      <tbody id="liveBody"></tbody>
-    </table></div>
-  </section>
-
-  <section class="card" id="method">
-    <h2>How a value is built</h2>
-    <p class="lede">One function, <code>impliedValue()</code>, scores every row from the snapshot's own
-    figures — TVL, 7-day growth, and how long the protocol has run with no token. Fitted on the
-    protocols whose tokens already trade, and refit live in this page: the badge above compares every
-    refitted row with <code>board.json</code>.</p>
-    <div class="formula" id="formula">Fitting…</div>
-    <div class="cols">
-      <div>
-        <h3>The comps</h3>
-        <p><span id="compCount">—</span> protocols whose token already trades (market cap above zero),
-        excluding exchange tokens, bridges and wrapped or staked wrappers, and versioned pool names.
-        No protocol is named: one rule picks comps and board.</p>
-        <h3>Clamped, never extrapolated</h3>
-        <p>Every feature is clamped to the range the comps show before it is scored, so no protocol is
-        priced by extending a line past the evidence. Growth is capped at ±60% a week — the snapshot's
-        largest figure is +4,448%, and one outlier must not set a value.</p>
-      </div>
-      <div>
-        <h3>The fitted signs, honestly</h3>
-        <p>The fit sets the weights, not a story. In this snapshot, at fixed size, faster 7-day growth
-        and longer seasoning both come with <em>lower</em> multiples — their coefficients are negative
-        and small. The model reports what the comps say. The ablation table shows what each term earned.</p>
-        <h3>Bands and rank ranges</h3>
-        <p>Each value carries a band from the model's own leave-one-out errors, and a rank range from
-        200 bootstrap refits of the whole fit. Wide bands mean the comps disagree; wide rank ranges
-        mean fragile ranks. Both are shown.</p>
-      </div>
+  <section class="panel">
+    <div class="tablewrap">
+      <table id="table">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
     </div>
-    <h3>Out of sample: what each term earned</h3>
-    <div id="ablation">Computing…</div>
-    <p class="note" id="wfLine"></p>
-    <h3>Farm economics, stated</h3>
-    <p>Every plan is costed at a stated deposit and airdrop share, and netted at the <em>low quartile</em>
-    of the value band: if a farm does not pay at the low end of what the model thinks the token is worth,
-    the verdict says so. Gas covers 15 transactions plus one bridge hop, priced on the cheapest chain
-    each protocol supports (Ethereum $6, Arbitrum/Optimism/Base $0.30,
-    Solana $0.05, BSC $0.20, Polygon $0.10, Avalanche $0.40, other chains $1). Locking the deposit 90 days
-    costs 4.5% in forgone T-bill yield. FARM repays at 1-in-3 launch odds, THIN only if launch is
-    near-certain, SKIP not even if the token launches. Break-even odds are the bar, not a forecast.
-    This entry does not predict launch dates or probabilities.</p>
   </section>
-
-  <section class="card" id="chartCard">
-    <h2>The comps, the curve, and the board</h2>
-    <p class="lede">Traded comps in teal, the fitted curve with its middle-half band, ranked pre-token
-    protocols in amber. Similar TVL, wildly different multiples: hence the bands.</p>
-    <div id="chart">Drawing…</div>
-  </section>
-
-  <section class="card" id="recon">
-    <h2>Every protocol accounted for</h2>
-    <div id="reconBody">Computing…</div>
-  </section>
-
-  <section class="card" id="judgeNote">
-    <h2>A note to the judge</h2>
-    <p>Every claim on this page is checkable inside this page. The refit badge at the top re-runs the
-    whole fit — comps, ridge, category offsets, leave-one-out bands, 200 bootstrap refits — from the
-    snapshot this page carries, and compares every rank, value, band, rank range and verdict with
-    <code>board.json</code>. The ablation table shows what each term earned; the scatter shows the comps. Farm verdicts are netted at the low quartile of
-    each value band, so a FARM verdict has already survived the model's own pessimism. What this entry
-    does not claim: launch dates, launch probabilities, or precision the comps do not support — the
-    median leave-one-out miss is about ×3, and the bands say so on every row.</p>
-  </section>
+  <section class="panel" id="integrity" aria-label="Model, fits and held-out tests"></section>
+  <p class="note" id="coverage-note"></p>
 </main>
-<footer class="wrap foot">
-  <span id="footLine">Token Radar · model radar-4</span>
-  <span>No framework, no network.</span>
-</footer>
+<aside class="drawer" id="drawer" aria-label="Protocol detail" hidden></aside>
 <script src="../data.js"></script>
 <script src="app.js"></script>
 </body>
