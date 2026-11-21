@@ -1,72 +1,80 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Token Radar 5 — pre-token protocols ranked by expected value</title>
+<title>Launch Radar — Token Launch Radar</title>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<a class="skip" href="#board">Skip to the board</a>
-<header class="masthead">
-  <div class="masthead-inner">
-    <p class="kicker">TOKEN RADAR · RADAR-5 · EXPECTED VALUE = LAUNCH VALUE × TOKEN ODDS</p>
-    <h1>Which pre-token protocol is worth farming?</h1>
-    <p class="lede">Every protocol the snapshot carries, ranked by what its token would be worth
-      <em>if</em> it launches, times how likely it ever is to record one. The launch value is a
-      comps curve fitted on the traded tokens; the odds are a logistic fit on the peers'
-      record. Both fits — and the held-out tests that kept or dropped each term — are on
-      this page, with the numbers the model actually got.</p>
-    <p class="asof" id="asof"></p>
+<header class="top">
+  <div class="brand">
+    <div class="mark">◉</div>
+    <div>
+      <h1>Launch Radar</h1>
+      <p class="sub">Which pre-token protocols are worth farming, and what a token would be worth if it listed.</p>
+    </div>
   </div>
+  <div class="meta" id="meta"></div>
 </header>
-<main id="board" tabindex="-1" aria-busy="true">
-  <section class="strip" id="kpi" aria-label="Coverage and verdicts"></section>
-  <section class="panel controls" aria-label="Board controls">
-    <div class="tabs" role="tablist" aria-label="Views">
-      <button type="button" role="tab" data-view="board" aria-selected="true">Ranked board</button>
-      <button type="button" role="tab" data-view="live" aria-selected="false">Live tokens</button>
-      <button type="button" role="tab" data-view="excluded" aria-selected="false">Excluded pre-token</button>
-      <button type="button" role="tab" data-view="nomcap" aria-selected="false">Token, no market cap</button>
-    </div>
-    <div class="filters">
-      <label>Search <input id="q" type="search" placeholder="name or slug" autocomplete="off"></label>
-      <label>Verdict
-        <select id="verdict">
-          <option value="all">All verdicts</option>
-          <option value="FARM">FARM</option>
-          <option value="THIN">THIN</option>
-          <option value="SKIP">SKIP</option>
-        </select>
-      </label>
-      <label>Category
-        <select id="category"><option value="all">All categories</option></select>
-      </label>
-      <label>Sort
-        <select id="sort">
-          <option value="ev">Expected value</option>
-          <option value="launch">Launch value</option>
-          <option value="odds">Token odds</option>
-          <option value="tvl">TVL</option>
-          <option value="growth">7-day growth</option>
-          <option value="net">Farm net</option>
-        </select>
-      </label>
-    </div>
+
+<section class="strip" id="kpis" aria-label="Coverage and model fit"></section>
+
+<section class="integrity" id="integrity" aria-label="How the model is tested"></section>
+
+<nav class="controls">
+  <div class="tabs" role="tablist">
+    <button id="tab-board" class="tab active" data-view="board" role="tab">Ranked board</button>
+    <button id="tab-live" class="tab" data-view="live" role="tab">Live tokens</button>
+  </div>
+  <input id="search" type="search" placeholder="Search name or slug…" aria-label="Search protocols">
+  <select id="category" aria-label="Filter by category"><option value="">All categories</option></select>
+  <select id="sort" aria-label="Sort board">
+    <option value="ev">Sort: implied value</option>
+    <option value="tvl">Sort: TVL</option>
+    <option value="growth">Sort: 7-day growth</option>
+    <option value="odds">Sort: token odds</option>
+    <option value="age">Sort: age</option>
+  </select>
+</nav>
+
+<main>
+  <aside id="detail" hidden aria-label="Protocol detail"></aside>
+
+  <section id="board-view">
+    <table id="board">
+      <thead>
+        <tr>
+          <th>#</th><th>Protocol</th><th>Category</th><th>Chains</th>
+          <th class="num">TVL</th><th class="num">7d</th><th class="num">Age</th>
+          <th class="num">Launch $</th><th class="num">Odds</th>
+          <th class="num">Implied $</th><th>Verdict</th><th class="num">Farm $</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
     <p class="count" id="count"></p>
   </section>
-  <section class="panel">
-    <div class="tablewrap">
-      <table id="table">
-        <thead id="thead"></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
+
+  <section id="live-view" hidden>
+    <table id="live">
+      <thead>
+        <tr>
+          <th>Protocol</th><th>Category</th><th>Chains</th>
+          <th class="num">TVL</th><th class="num">Market cap</th><th class="num">7d</th>
+        </tr>
+      </thead>
+      <tbody id="live-rows"></tbody>
+    </table>
+    <p class="count">These protocols already trade. Their market caps are the market's own values, shown for comparison — never mixed into the ranked board.</p>
   </section>
-  <section class="panel" id="integrity" aria-label="Model, fits and held-out tests"></section>
-  <p class="note" id="coverage-note"></p>
 </main>
-<aside class="drawer" id="drawer" aria-label="Protocol detail" hidden></aside>
+
+<footer>
+  <p><strong>How the numbers are made.</strong> The launch value is fitted from this snapshot's own traded tokens: log(market cap) against log(TVL), one trim pass, then each category's median residual, shrunk toward zero. Token odds come from the category's peer listing rate, smoothed toward the snapshot's global rate and discounted by how long the protocol has already run with no token. Implied value = launch × growth × maturity × odds. No protocol name is special-cased; the same functions score every row. The fit is tested by a two-fold holdout on the traded tokens — see the numbers above.</p>
+  <p class="src" id="source"></p>
+</footer>
+
 <script src="../data.js"></script>
 <script src="app.js"></script>
 </body>
